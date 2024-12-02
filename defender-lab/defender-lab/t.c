@@ -143,25 +143,55 @@ struct sprite sprites[4];
 int fire;
 
 Draw_all(){
-char *p;
-int i=0,j=0;
-for (int x=0; x<640*480; x++)
-    fb[x] = 0x00000000;    // clean screen; all pixels are BLACK
- TIMER *t = &timer[0];
-for (i=0; i<8; i++){
-       kpchar(t->clock[i], 1, 70+i);
-    }
+   char *p;
+   int i=0,j=0;
+   for (int x=0; x<640*480; x++)
+       fb[x] = 0x00000000;    // clean screen; all pixels are BLACK
+
+   TIMER *t = &timer[0];
+   for (i=0; i<8; i++){
+          kpchar(t->clock[i], 1, 70+i);
+       }
 
 
-         
-for ( i=1;i<4;i++){
-    show_bmp(sprites[i].p, sprites[i].y, sprites[i].x);
-    if (i>1)
-         sprites[i].x+=10; 
-    }
+   for ( i=1;i<4;i++){
+      if (sprites[i].enabled){
+          show_bmp(sprites[i].p, sprites[i].y, sprites[i].x);
+          if (i>1)
+            sprites[i].x+=10;
+          }
+   }
 
-fbmodified =1;
-*(volatile unsigned int *)(0x1012001C) |= 0xc; // enable video interrupts
+   if (sprites[0].enabled) {
+      show_bmp(sprites[0].p, sprites[0].y, sprites[0].x);
+      if (sprites[0].direction == 1) { // Right
+         sprites[0].x += 16;
+      } else { // Left
+         sprites[0].x -= 16;
+      }
+      // Disable projectile if it goes out of bounds
+      if (sprites[0].x < 0 || sprites[0].x > 640-(4*16) + 2) {
+         sprites[0].enabled = 0;
+      }
+
+      // Check for collision
+      for (i = 2; i < 4; i++) {
+            if (sprites[i].enabled &&
+                sprites[0].x < sprites[i].x + 32 &&
+                sprites[0].x + 50 > sprites[i].x &&
+                sprites[0].y < sprites[i].y + 27 &&
+                sprites[0].y + 2 > sprites[i].y) {
+                   // Collision detected
+                   kprintf("Collision detected between projectile and lander %d\n", i);
+                   sprites[0].enabled = 0; // Disable projectile
+                   sprites[i].enabled = 0; // Disable lander
+            }
+        }
+   }
+
+
+   fbmodified =1;
+   *(volatile unsigned int *)(0x1012001C) |= 0xc; // enable video interrupts
 }
 
 int counter;
@@ -179,13 +209,16 @@ int main()
    sprites[1].x = 80;
    sprites[1].y = 0;
    sprites[1].p = &_binary_ship_right_bmp_start;
+   sprites[1].enabled = 1;
    sprites[1].direction=1;
    sprites[2].x = 200;
    sprites[2].y = 200;
    sprites[2].p = &_binary_lander_bmp_start;
+   sprites[2].enabled = 1;
    sprites[3].x = 200;
    sprites[3].y = 100;
    sprites[3].p = &_binary_lander_bmp_start;
+   sprites[3].enabled = 1;
 
    char * p;   
    color = YELLOW;
@@ -256,23 +289,45 @@ int key;
      key=ugetc(up);
      switch(key){
        case 'd':
-         if ( sprites[1].x < 624){
+         if ( sprites[1].x < 624-(4*16)){
             sprites[1].x+=16;
+            sprites[1].p = &_binary_ship_right_bmp_start;
+            sprites[1].direction = 1;
             }
          move =1;
          break;
-/* TODO 
+       case 'a':
+         if (sprites[1].x > 0){
+            sprites[1].x-=16;
+            sprites[1].p = &_binary_ship_left_bmp_start;
+            sprites[1].direction = 0;
+            }
+         move =1;
+         break;
+       case 'w':
+         if (sprites[1].y > 0){
+            sprites[1].y-=16;
+            }
+         move =1;
+         break;
+       case 's':
+         if (sprites[1].y < 464-(1*16)){
+            sprites[1].y+=16;
+            }
+         move =1;
+         break;
 
-other keys w,e and f to move defender around */
+       case 'f':
+         sprites[0].x = sprites[1].x;
+         sprites[0].y = sprites[1].y;
+         sprites[0].p = &_binary_shoot_bmp_start;
+         sprites[0].direction = sprites[1].direction;
+         sprites[0].enabled = 1;
+         move = 1;
+         break;
 
-
-
-      case 'f':
-  /* TODO firing */
-  
-          break;
-      default:
-        move=0;
+       default:
+          move=0;
       }
 }
       if (move || spriteMove){
