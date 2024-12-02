@@ -159,6 +159,9 @@ Draw_all(){
           show_bmp(sprites[i].p, sprites[i].y, sprites[i].x);
           if (i>1)
             sprites[i].x+=10;
+            if (sprites[i].x > 640){
+               sprites[i].x = 0;
+               }
           }
    }
 
@@ -176,15 +179,24 @@ Draw_all(){
 
       // Check for collision
       for (i = 2; i < 4; i++) {
-            if (sprites[i].enabled &&
+            if (sprites[i].enabled) {
+//               kprintf(
+//                  "Checking collision: Projectile (%d, %d, %d, %d) Lander %d (%d, %d, %d, %d)\n",
+//                 sprites[0].x, sprites[0].y, sprites[0].x + 50, sprites[0].y + 2,
+//                 i, sprites[i].x, sprites[i].y, sprites[i].x + 32, sprites[i].y + 27
+//               );
+
+              if(
                 sprites[0].x < sprites[i].x + 32 &&
                 sprites[0].x + 50 > sprites[i].x &&
                 sprites[0].y < sprites[i].y + 27 &&
-                sprites[0].y + 2 > sprites[i].y) {
+                sprites[0].y + 2 > sprites[i].y
+                  ) {
                    // Collision detected
-                   kprintf("Collision detected between projectile and lander %d\n", i);
+//                   kprintf("Collision detected between projectile and lander %d\n", i);
                    sprites[0].enabled = 0; // Disable projectile
                    sprites[i].enabled = 0; // Disable lander
+               }
             }
         }
    }
@@ -319,7 +331,7 @@ int key;
 
        case 'f':
          sprites[0].x = sprites[1].x;
-         sprites[0].y = sprites[1].y;
+         sprites[0].y = sprites[1].y +16;
          sprites[0].p = &_binary_shoot_bmp_start;
          sprites[0].direction = sprites[1].direction;
          sprites[0].enabled = 1;
