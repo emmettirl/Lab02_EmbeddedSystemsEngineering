@@ -165,6 +165,7 @@ Draw_all(){
           }
    }
 
+   // Draw projectile
    if (sprites[0].enabled) {
       show_bmp(sprites[0].p, sprites[0].y, sprites[0].x);
       if (sprites[0].direction == 1) { // Right
@@ -180,11 +181,6 @@ Draw_all(){
       // Check for collision
       for (i = 2; i < 4; i++) {
             if (sprites[i].enabled) {
-//               kprintf(
-//                  "Checking collision: Projectile (%d, %d, %d, %d) Lander %d (%d, %d, %d, %d)\n",
-//                 sprites[0].x, sprites[0].y, sprites[0].x + 50, sprites[0].y + 2,
-//                 i, sprites[i].x, sprites[i].y, sprites[i].x + 32, sprites[i].y + 27
-//               );
 
               if(
                 sprites[0].x < sprites[i].x + 32 &&
@@ -192,8 +188,6 @@ Draw_all(){
                 sprites[0].y < sprites[i].y + 27 &&
                 sprites[0].y + 2 > sprites[i].y
                   ) {
-                   // Collision detected
-//                   kprintf("Collision detected between projectile and lander %d\n", i);
                    sprites[0].enabled = 0; // Disable projectile
                    sprites[i].enabled = 0; // Disable lander
                }
